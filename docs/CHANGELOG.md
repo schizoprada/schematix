@@ -1,5 +1,33 @@
 # SCHEMATIX - CHANGELOG
 
+## [0.3.0] -- May 27th, 2025
+### Complete Schema Implementation
+* **Concrete Schema Class**: Full implementation of `Schema` with transformation, validation, and composition
+* **Target Type Conversion**: Support for dataclasses, Pydantic models, NamedTuples, TypedDict
+* **Schema Composition**: `fromfields()`, `merge()`, `copy()`, `subset()` methods for flexible schema building
+* **Batch Processing**: `transformplural()` for processing lists of data objects
+* **Callable Interface**: Schema instances are callable for convenient transformation
+
+### Comprehensive Test Suite
+* **93 Passing Tests**: Complete test coverage across all components
+* **Unit Tests**: Individual field and schema functionality
+* **Integration Tests**: Real-world transformation workflows
+* **Edge Case Testing**: Error handling, validation, boundary conditions
+* **Test Categories**: API transformation, web scraping, ETL pipelines, nested data
+
+### Production Ready Features
+* **Error Handling**: Detailed error messages with field-level reporting
+* **Validation System**: Schema and field-level validation with comprehensive error reporting
+* **Performance Optimized**: Efficient field extraction and operator chaining
+* **Memory Management**: Proper cleanup and resource handling
+
+### Bug Fixes & Stability
+* **Operator Chaining**: Fixed field flattening in combined and accumulated operations
+* **String Accumulation**: Proper separator handling in AccumulatedField
+* **Field Assignment**: Robust object attribute assignment across different types
+* **Fallback Logic**: Improved SourceField fallback detection and handling
+* **Dict Merging**: Correct dictionary combination in AccumulatedField
+
 ## [0.2.0] -- May 27th, 2025
 ### Core Foundation
 * **Metaclasses**: Implemented `SchemaMeta` for automatic field discovery and `FieldMeta` (skeleton for future extension)

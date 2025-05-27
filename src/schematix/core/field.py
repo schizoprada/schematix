@@ -138,7 +138,7 @@ class CombinedField(BaseField):
         # Use first field's settings as defaults
         firstfield = fields[0]
         super().__init__(
-            name=name or f"combined{firstfield.name}",
+            name=name,
             required=any(f.required for f in fields),  # Required if any field is required
             default={},  # Default to empty dict for merging
         )
@@ -159,13 +159,13 @@ class CombinedField(BaseField):
 
         for field in self.fields:
             try:
+                value = field.extract(data)
                 if hasattr(field, 'name') and field.name:
-                    # Single field result
-                    value = field.extract(data)
-                    result[field.name] = value
+                    if (value is not None) or field.required:
+                        # Single field result
+                        result[field.name] = value
                 else:
                     # If field doesn't have a name, skip or use index
-                    value = field.extract(data)
                     if isinstance(value, dict):
                         result.update(value)
                     else:
@@ -218,6 +218,16 @@ class CombinedField(BaseField):
         fieldnames = [f.name or str(f) for f in self.fields]
         return f"CombinedField([{', '.join(fieldnames)}])"
 
+    def __and__(self, other: 'BaseField') -> 'CombinedField':
+        if isinstance(other, CombinedField):
+            return CombinedField(
+                fields=(self.fields + other.fields),
+            )
+        else:
+            return CombinedField(
+                fields=(self.fields + [other])
+            )
+
 class NestedField(BaseField):
     """
     Field that applies another field to a nested path in the data structure.
@@ -240,7 +250,7 @@ class NestedField(BaseField):
             name: Override name for this field
         """
         super().__init__(
-            name=name or f"{field.name}_at_{nestedpath}",
+            name=name,
             required=field.required,
             default=field.default,
             source=field.source,
@@ -390,7 +400,7 @@ class AccumulatedField(BaseField):
 
         firstfield = fields[0]
         super().__init__(
-            name=name or f"accumulated{firstfield.name}",
+            name=name, #
             required=any(f.required for f in fields),  # Required if any field is required
             default=None,
         )
@@ -474,15 +484,7 @@ class AccumulatedField(BaseField):
         Returns:
             Combined result
         """
-        # Same types - use natural addition
-        if type(left) == type(right):
-            try:
-                return left + right
-            except TypeError:
-                # Types don't support +, fall back to string concat
-                return str(left) + self.separator + str(right)
-
-        # Different types - handle special cases
+        # Handle special cases first
         if isinstance(left, dict) and isinstance(right, dict):
             # Merge dictionaries
             result = left.copy()
@@ -498,8 +500,16 @@ class AccumulatedField(BaseField):
             return left + right
 
         if isinstance(left, str) and isinstance(right, str):
-            # Concatenate strings
+            # Handle string concatenation with separator
             return left + self.separator + right
+
+        # Same types (other than above special cases) - try natural addition
+        if type(left) == type(right):
+            try:
+                return left + right
+            except TypeError:
+                # Types don't support +, fall back to string concat
+                return str(left) + self.separator + str(right)
 
         # Fallback: convert to strings and concatenate
         return str(left) + self.separator + str(right)
@@ -539,6 +549,18 @@ class AccumulatedField(BaseField):
     def __repr__(self) -> str:
         fieldnames = [f.name or str(f) for f in self.fields]
         return f"AccumulatedField([{' + '.join(fieldnames)}])"
+
+    def __add__(self, other: 'BaseField') -> 'AccumulatedField':
+        if isinstance(other, AccumulatedField):
+            return AccumulatedField(
+                fields=(self.fields + other.fields),
+                separator=self.separator
+            )
+        else:
+            return AccumulatedField(
+                fields=(self.fields + [other]),
+                separator=self.separator
+            )
 
 ## Field Derivatives ##
 class SourceField(Field):
@@ -586,7 +608,10 @@ class SourceField(Field):
 
         # Try primary source first
         try:
-            return super().extract(data)
+            result = super().extract(data)
+            if (result == self.default):
+                return self._extractwithfallbacks(data)
+            return result
         except (ValueError, KeyError, AttributeError):
             # Try fallback sources
             return self._extractwithfallbacks(data)
@@ -607,15 +632,9 @@ class SourceField(Field):
             try:
                 # Temporarily set fallback as source
                 self.source = fallbacksource
-                raw = self._getsourcevalue(data)
-
-                if raw is not None:
-                    transformed = self._applytransform(raw)
-                    validated = self.validate(transformed)
-                    self._checkrequired(validated)
-                    return validated
-
-            except (ValueError, KeyError, AttributeError):
+                result = super().extract(data)
+                return result
+            except Exception:
                 continue
             finally:
                 # Restore original source
@@ -650,7 +669,6 @@ class SourceField(Field):
             transform=self.transform,
             **self._kwargs
         )
-
 
 class TargetField(Field):
     """

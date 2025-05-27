@@ -53,13 +53,13 @@ class BaseSchema(abc.ABC, metaclass=SchemaMeta):
         return (name in cls._fields)
 
     @abc.abstractmethod
-    def transform(self, data: t.Any) -> t.Any:
+    def transform(self, data: t.Any, typetarget: t.Optional[t.Type] = None) -> t.Any:
         """
         Transform source data using this schema's field definitions.
 
         Args:
             data: Source data to transform
-
+            typetarget: Optional target type (dict, dataclass, etc.)
         Returns:
             Transformed data in target format
         """

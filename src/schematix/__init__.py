@@ -7,7 +7,7 @@ reusability and composability. Define target schemas once and bind them to diffe
 data sources with source-specific extraction and transformation logic.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "Joel Yisrael"
 __email__ = "schizoprada@gmail.com"
 __license__ = "MIT"
@@ -16,11 +16,14 @@ __url__ = "https://github.com/schizoprada/schematix"
 # Version info tuple for programmatic access
 VERSION = tuple(map(int, __version__.split('.')))
 
-# Core imports will be added as we build the library
-# from .fields import Field
-# from .schemas import Schema
-# from .binding import Binding
-# from .transformers import Transform
+from .core import (
+    FieldMeta, SchemaMeta, BaseField, BaseSchema,
+    Field, FallbackField, CombinedField,
+    NestedField, AccumulatedField, BoundField,
+    SourceField, TargetField, FieldBindingFactory,
+    Schema
+
+)
 
 __all__ = [
     "__version__",
@@ -29,9 +32,18 @@ __all__ = [
     "__license__",
     "__url__",
     "VERSION",
-    # Core classes will be added here
-    # "Field",
-    # "Schema",
-    # "Binding",
-    # "Transform",
+    'FieldMeta',
+    'SchemaMeta',
+    'BaseField',
+    'BaseSchema',
+    'Field',
+    'FallbackField',
+    'CombinedField',
+    'NestedField',
+    'AccumulatedField',
+    'BoundField',
+    'SourceField',
+    'TargetField',
+    'FieldBindingFactory',
+    'Schema'
 ]

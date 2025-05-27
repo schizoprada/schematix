@@ -220,10 +220,11 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
         else:
             if hasattr(targetobj, '__setitem__'):
                 targetobj[self.target] = value
-            elif hasattr(targetobj, self.target):
-                setattr(targetobj, self.target, value)
             else:
-                raise ValueError(f"Cannot set target '{self.target}' on {type(targetobj)}")
+                try:
+                    setattr(targetobj, self.target, value)
+                except Exception as e:
+                    raise ValueError(f"Cannot set target '{self.target}' on {type(targetobj)}: {str(e)}")
 
     def __repr__(self) -> str:
         return (
