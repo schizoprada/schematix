@@ -3,7 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/schematix.svg)](https://badge.fury.io/py/schematix)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-120%20passed-green.svg)](https://github.com/schizoprada/schematix)
+[![Tests](https://img.shields.io/badge/tests-173%20passed-green.svg)](https://github.com/schizoprada/schematix)
 
 A Python library for **declarative data mapping and transformation** that emphasizes reusability and composability. Define your target schemas once and bind them to different data sources with intuitive operator overloading.
 
@@ -257,11 +257,74 @@ class UserSchema:
 user = UserSchema().transform(data)
 ```
 
+## 🔄 Transform System
+
+Schematix now includes a powerful transform system for data processing pipelines:
+
+### Intuitive Transform Composition
+```python
+from schematix.transforms import text, numbers, common
+
+# Pipeline composition with >> operator
+name_cleaner = text.strip >> text.title >> text.normalizewhitespace
+
+# Fallback logic with | operator
+safe_number = numbers.to.int | numbers.constant(0)
+
+# Parallel processing with & operator
+multi_format = numbers.format.currency & numbers.format.percent
+
+# Real-world cleaning pipeline
+email_processor = common.clean.email >> common.validate.email
+```
+
+### Comprehensive Transform Library
+- **Text**: String manipulation, regex, encoding, formatting (35+ transforms)
+- **Numbers**: Math operations, formatting, validation (30+ transforms)
+- **Dates**: Parsing, formatting, timezone handling (40+ transforms)
+- **Collections**: List/dict operations, filtering, aggregation (25+ transforms)
+- **Validation**: Format checking, cleaning, requirements (20+ transforms)
+- **Common**: Pre-built patterns for real-world use cases (25+ transforms)
+
+### Advanced Features
+```python
+# Context-aware transforms
+full_name = transforms.multifield(['first_name', 'last_name'],
+                                 lambda f, l: f"{f} {l}")
+
+# Conditional transforms
+format_price = transforms.conditional(
+    lambda x: x > 100,
+    numbers.format.currency(),
+    numbers.format.commas()
+)
+
+# Safe operations with fallbacks
+safe_clean = common.clean.safe.email(default="unknown@example.com")
+```
+
+### Transform + Schema Integration
+```python
+# Use transforms in field definitions
+class UserSchema(Schema):
+    name = Field(source='full_name', transform=text.strip >> text.title)
+    email = Field(source='email_addr', transform=common.clean.email)
+    price = Field(source='amount', transform=numbers.to.float >> numbers.format.currency)
+
+# Or use the short aliases
+import schematix as sx
+
+class ProductSchema(sx.Schema):
+    title = sx.Field(source='name', transform=sx.x.txt.title)
+    cost = sx.Field(source='price', transform=sx.x.num.format.currency())
+```
+
+
 ## 🛠️ Development Status
 
 Schematix is actively developed and production-ready:
 
-- ✅ **120 passing tests** with comprehensive coverage
+- ✅ **173 passing tests** with comprehensive coverage
 - ✅ **Type hints** throughout for excellent IDE support
 - ✅ **Detailed documentation** and examples
 - ✅ **Semantic versioning** and changelog

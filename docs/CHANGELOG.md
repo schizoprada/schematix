@@ -1,5 +1,48 @@
 # SCHEMATIX - CHANGELOG
 
+## [0.4.0] -- May 29th, 2025
+### Transform System Architecture
+* **BaseTransform & Transform Classes**: Complete transform composition system with operator overloading (`>>`, `|`, `&`)
+* **Transform Composition**: PipelineTransform, FallbackTransform, ParallelTransform for complex transformation chains
+* **Context-Aware Transforms**: Support for transforms that access full source data context
+* **Operator Overloading**: Intuitive `>>` (pipeline), `|` (fallback), `&` (parallel) operators with method chaining equivalents
+* **@transform Decorator**: Clean decorator syntax for creating transforms from functions
+
+### Comprehensive Transform Library
+* **Text Transforms**: String manipulation, regex operations, encoding/decoding, formatting (35+ transforms)
+* **Number Transforms**: Type conversion, math operations, rounding, range validation, formatting (30+ transforms)
+* **Date Transforms**: Parsing, formatting, arithmetic, timezone handling, component extraction (40+ transforms)
+* **Collection Transforms**: List/dict operations, filtering, mapping, aggregation, set operations (25+ transforms)
+* **Validation Transforms**: Format validation, content checks, cleaning, requirements with error handling (20+ transforms)
+* **Common Transforms**: Pre-built patterns combining multiple modules for real-world use cases (25+ transforms)
+
+### Transform Module Organization
+* **Modular Design**: Separate modules (text, numbers, dates, collections, validation, common) with short aliases
+* **Class-Based Grouping**: Logical organization (encode/decode, format, parse, clean, safe, requires)
+* **Factory Functions**: Parameterized transforms for flexible configuration
+* **Static Method Transforms**: Clean API for common operations
+
+### Advanced Features
+* **Pipeline Composition**: Chain multiple transforms with automatic error propagation
+* **Fallback Logic**: Primary/backup transform patterns with graceful error handling
+* **Parallel Execution**: Apply multiple transforms simultaneously with custom result combiners
+* **Safe Operations**: Transforms with default fallbacks that never raise errors
+* **Multi-field Transforms**: Context-aware transforms accessing multiple source fields
+* **Conditional Transforms**: Apply different transforms based on runtime conditions
+
+### Production Quality
+* **156 Passing Tests**: Comprehensive test coverage across all transform modules and compositions
+* **Error Handling**: Robust error propagation with detailed error messages
+* **Type Safety**: Full type hints throughout transform system
+* **Performance Optimized**: Efficient transform chaining and operator overloading
+* **Memory Safe**: Proper cleanup and resource management
+
+### Integration & Usability
+* **Field Integration**: Transforms work seamlessly with existing Field system
+* **Intuitive API**: Consistent calling patterns and predictable behavior
+* **Real-world Patterns**: Pre-built pipelines for common data processing tasks
+* **Documentation**: Extensive examples and usage patterns for all transform types
+
 ## [0.3.6] -- May 29th, 2025
 ### Decorator API
 * **@schema Decorator**: Convert regular classes to Schema classes with field auto-discovery

@@ -1,6 +1,11 @@
 # ~/schematix/src/schematix/core/__init__.py
 from .metas import FieldMeta, SchemaMeta
-from .bases import BaseField, BaseSchema
+from .bases import (
+    BaseField, BaseSchema, BaseTransform,
+    Transform, PipelineTransform,
+    FallbackTransform, ParallelTransform
+
+)
 
 from .field import (
     Field, FallbackField, CombinedField,
@@ -9,6 +14,10 @@ from .field import (
 )
 
 from .schema import Schema
+
+from .transform import (
+    transform, pipeline, fallback, multifield, conditional
+)
 
 __all__ = [
     'FieldMeta',
@@ -24,5 +33,15 @@ __all__ = [
     'SourceField',
     'TargetField',
     'FieldBindingFactory',
-    'Schema'
+    'Schema',
+    'BaseTransform',
+    'Transform',
+    'PipelineTransform',
+    'FallbackTransform',
+    'ParallelTransform',
+    'transform',
+    'pipeline',
+    'fallback',
+    'multifield',
+    'conditional'
 ]
