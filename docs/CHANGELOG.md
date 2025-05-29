@@ -1,5 +1,36 @@
 # SCHEMATIX - CHANGELOG
 
+## [0.3.6] -- May 29th, 2025
+### Decorator API
+* **@schema Decorator**: Convert regular classes to Schema classes with field auto-discovery
+* **@field Decorator Suite**: Complete decorator ecosystem for all field types
+ - `@field` - Basic Field creation from class attributes
+ - `@field.source` - SourceField with enhanced extraction capabilities
+ - `@field.target` - TargetField with enhanced assignment features
+ - `@field.bound` - BoundField for complete source-to-target binding
+ - `@field.fallback` - FallbackField for primary/backup field logic
+ - `@field.combined` - CombinedField for merging multiple field results
+ - `@field.nested` - NestedField for applying fields to nested data paths
+ - `@field.accumulated` - AccumulatedField for smart value combination
+
+### Advanced Field Configuration
+* **Dynamic Constructor Inspection**: Automatic validation of required decorator attributes using `inspect` module
+* **Flexible Field Naming**: Schema metaclass controls field naming for maximum reusability across contexts
+* **Enhanced Type Validation**: Robust input validation for complex field configurations (lists, field instances)
+* **Comprehensive Error Handling**: Clear error messages for missing required attributes and invalid configurations
+
+### API Improvements
+* **Functional Programming Style**: Clean decorator syntax alongside existing class-based API
+* **Constructor Introspection**: Dynamic validation based on actual field constructor signatures
+* **Extended __constructs__ Pattern**: Systematic attribute mapping for all field types
+* **Context-Aware Naming**: Field names determined by usage context rather than definition context
+
+### Testing & Quality
+* **27 Passing Decorator Tests**: Comprehensive test coverage for all decorator functionality
+* **Integration Testing**: End-to-end decorator usage with schema composition
+* **Error Case Validation**: Thorough testing of invalid inputs and edge cases
+* **Documentation Examples**: Real-world usage patterns and best practices
+
 ## [0.3.0] -- May 27th, 2025
 ### Complete Schema Implementation
 * **Concrete Schema Class**: Full implementation of `Schema` with transformation, validation, and composition

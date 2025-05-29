@@ -3,7 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/schematix.svg)](https://badge.fury.io/py/schematix)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-93%20passed-green.svg)](https://github.com/schizoprada/schematix)
+[![Tests](https://img.shields.io/badge/tests-120%20passed-green.svg)](https://github.com/schizoprada/schematix)
 
 A Python library for **declarative data mapping and transformation** that emphasizes reusability and composability. Define your target schemas once and bind them to different data sources with intuitive operator overloading.
 
@@ -228,11 +228,40 @@ safe_extraction = (
 )
 ```
 
+### Decorator Style (Alternative Syntax)
+
+```python
+import schematix as sx
+
+# Define fields using decorators
+@sx.field
+class UserID:
+    source = 'user_id'
+    required = True
+
+@sx.field.accumulated
+class FullName:
+    fields = [
+        sx.Field(source='first_name'),
+        sx.Field(source='last_name')
+    ]
+
+# Define schema using decorator
+@sx.schema
+class UserSchema:
+    id = UserID
+    email = sx.Field(source='email_address', required=True)
+    name = FullName
+
+# Same transformation capability
+user = UserSchema().transform(data)
+```
+
 ## 🛠️ Development Status
 
 Schematix is actively developed and production-ready:
 
-- ✅ **93 passing tests** with comprehensive coverage
+- ✅ **120 passing tests** with comprehensive coverage
 - ✅ **Type hints** throughout for excellent IDE support
 - ✅ **Detailed documentation** and examples
 - ✅ **Semantic versioning** and changelog

@@ -7,7 +7,7 @@ reusability and composability. Define target schemas once and bind them to diffe
 data sources with source-specific extraction and transformation logic.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.6"
 __author__ = "Joel Yisrael"
 __email__ = "schizoprada@gmail.com"
 __license__ = "MIT"
@@ -23,6 +23,9 @@ from .core import (
     SourceField, TargetField, FieldBindingFactory,
     Schema
 
+)
+from .decorators import (
+    field, schema
 )
 
 __all__ = [
@@ -45,5 +48,7 @@ __all__ = [
     'SourceField',
     'TargetField',
     'FieldBindingFactory',
-    'Schema'
+    'Schema',
+    'field',
+    'schema'
 ]

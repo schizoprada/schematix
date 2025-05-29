@@ -55,6 +55,7 @@ class FallbackField(BaseField):
 
     Result of the | operator: primary_field | fallback_field
     """
+    __constructs__ = (Field.__constructs__ | {'primary', 'fallback'})
 
     def __init__(
         self,
@@ -119,6 +120,7 @@ class CombinedField(BaseField):
 
     Result of the & operator: field1 & field2 & field3
     """
+    __constructs__ = (Field.__constructs__ | {'fields'})
 
     def __init__(
         self,
@@ -135,6 +137,10 @@ class CombinedField(BaseField):
         if not fields:
             raise ValueError("CombinedField requires at least one field")
 
+        if not isinstance(fields, (list, tuple, set)):
+            raise ValueError("'fields' param must be list, tuple, or set")
+
+        fields = list(fields)
         # Use first field's settings as defaults
         firstfield = fields[0]
         super().__init__(
@@ -234,6 +240,7 @@ class NestedField(BaseField):
 
     Result of the @ operator: field @ "nested.path"
     """
+    __constructs__ = (Field.__constructs__ | {'field', 'nestedpath'})
 
     def __init__(
         self,
@@ -380,6 +387,7 @@ class AccumulatedField(BaseField):
 
     Result of the + operator: field1 + field2 + field3
     """
+    __constructs__ = (Field.__constructs__ | {'fields', 'separator'})
 
     def __init__(
         self,
@@ -397,6 +405,11 @@ class AccumulatedField(BaseField):
         """
         if not fields:
             raise ValueError("AccumulatedField requires at least one field")
+
+        if not isinstance(fields, (list, tuple, set)):
+            raise ValueError("'fields' param must be list, tuple, or set")
+
+        fields = list(fields)
 
         firstfield = fields[0]
         super().__init__(
@@ -573,6 +586,7 @@ class SourceField(Field):
     - Complex nested data handling
     - Source data validation
     """
+    __constructs__ = (Field.__constructs__ | {'fallbacks', 'condition'})
 
     def __init__(
         self,
@@ -680,6 +694,8 @@ class TargetField(Field):
     - Multiple target assignments
     - Target structure creation
     """
+
+    __constructs__ = (Field.__constructs__ | {'formatter', 'condition', 'additionaltargets', 'createstructure'})
 
     def __init__(
         self,
@@ -817,6 +833,7 @@ class BoundField:
     Represents a complete transformation: extract from source, transform, validate,
     and assign to target. This is the result of binding source and target fields together.
     """
+    __constructs__: set[str] = {'sourcefield', 'targetfield', 'name', 'transform'}
 
     def __init__(
         self,
@@ -846,8 +863,10 @@ class BoundField:
         if self.sourcefield.source is None:
             raise ValueError(f"Source field '{self.sourcefield.name}' has no source defined")
 
-        if self.targetfield and self.targetfield.target is None:
-            raise ValueError(f"Target field '{self.targetfield.name}' has no target defined")
+        # only validate explicit target fields
+        if (self.targetfield is not self.sourcefield) and (self.targetfield.target is None):
+            raise ValueError(f"Target field '{self.targetfield.name}' has no target defined ")
+
 
     def transformdata(self, data: t.Any, targetobj: t.Any) -> None:
         """

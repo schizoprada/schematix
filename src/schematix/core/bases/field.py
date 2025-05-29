@@ -22,6 +22,7 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
     - validate(): Validate extracted values
     - Core attributes: name, required, default, transform
     """
+    __constructs__: set[str] = {'name', 'required', 'default', 'transform', 'source', 'target'}
 
     def __init__(
         self,
