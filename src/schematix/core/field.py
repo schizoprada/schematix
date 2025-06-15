@@ -14,14 +14,60 @@ class Field(BaseField):
     Specialized field types can inherit from BaseField or this class.
     """
 
-    def extract(self, data: t.Any) -> t.Any:
+    def _evaluateconditions(self, computed: t.Dict[str, t.Any]) -> t.Dict[str, t.Any]:
+        """Evaluate all conditions given computed field values."""
+        if not self.dependencies:
+            raise ValueError(f"Conditional Field '{self.name}' has no dependencies")
+        if not self.conditions:
+            raise ValueError(f"Conditional Field '{self.name}' has no conditions")
+
+        result = {}
+
+        depvals = [] # dependency values
+        for dep in self.dependencies:
+            if dep not in computed:
+                raise ValueError(f"Dependency '{dep}' not available for field '{self.name}'")
+            depvals.append(computed[dep])
+
+        for condition, evaluator in self.conditions.items():
+            try:
+                result[condition] = evaluator(*depvals)
+            except Exception as e:
+                raise ValueError(f"Condition '{condition}' failed for field '{self.name}': {e}")
+
+        return result
+
+    def _extractwithoverrides(self, data: t.Any, overrides: t.Dict[str, t.Any]) -> t.Any:
+        """Extract with temporary property overrides."""
+        originals = {}
+        for prop in ['required', 'default', 'transform', 'choices', 'type', 'mapping']:
+            originals[prop] = getattr(self, prop)
+
+        try:
+            for prop, value in overrides.items():
+                if (prop != 'value') and hasattr(self, prop):
+                    setattr(self, prop, value)
+            # Normal extraction pipeline
+            raw = self._getsourcevalue(data)
+            transformed = self._applytransform(raw)
+            typed = self._applytype(transformed)
+            mapped = self._applymapping(typed)
+            choicesvalidated = self._validatechoices(mapped)
+            validated = self.validate(choicesvalidated)
+            self._checkrequired(validated)
+            return validated
+
+        finally:
+            # restore originals
+            for prop, value in originals.items():
+                setattr(self, prop, value)
+
+
+    def extract(self, data: t.Any, computed: t.Optional[t.Dict[str, t.Any]] = None) -> t.Any:
         """
         Standard field extraction implementation.
 
-        1. Get raw value from source data
-        2. Apply transformation if defined
-        3. Validate the result
-        4. Check required constraint
+        Order: source → transform → type → mapping → choices → validate → required
 
         Args:
             data: Source data object
@@ -29,9 +75,23 @@ class Field(BaseField):
         Returns:
             Extracted, transformed, and validated value
         """
+        # handle conditional
+        if self.conditional:
+            if computed is None:
+                raise ValueError(f"Conditional field '{self.name}' requires computed (fields)")
+            evaluated = self._evaluateconditions(computed)
+
+            if 'value' in evaluated:
+                return evaluated['value']
+
+            return self._extractwithoverrides(data, evaluated)
+
         raw = self._getsourcevalue(data)
         transformed = self._applytransform(raw)
-        validated = self.validate(transformed)
+        typed = self._applytype(transformed)
+        mapped = self._applymapping(typed)
+        choicesvalidated = self._validatechoices(mapped)
+        validated = self.validate(choicesvalidated)
         self._checkrequired(validated)
         return validated
 
@@ -79,7 +139,7 @@ class FallbackField(BaseField):
         self.primary = primary
         self.fallback = fallback
 
-    def extract(self, data: t.Any) -> t.Any:
+    def extract(self, data: t.Any, computed: t.Optional[t.Dict[str, t.Any]] = None) -> t.Any:
         """
         Try extracting from primary field, fallback to secondary if it fails.
 
@@ -150,7 +210,7 @@ class CombinedField(BaseField):
         )
         self.fields = fields
 
-    def extract(self, data: t.Any) -> t.Dict[str, t.Any]:
+    def extract(self, data: t.Any, computed: t.Optional[t.Dict[str, t.Any]] = None) -> t.Dict[str, t.Any]:
         """
         Apply all fields to data and merge results.
 
@@ -267,7 +327,7 @@ class NestedField(BaseField):
         self.field = field
         self.nestedpath = nestedpath
 
-    def extract(self, data: t.Any) -> t.Any:
+    def extract(self, data: t.Any, computed: t.Optional[t.Dict[str, t.Any]] = None) -> t.Any:
         """
         Navigate to nested path, then apply field extraction.
 
@@ -420,7 +480,7 @@ class AccumulatedField(BaseField):
         self.fields = fields
         self.separator = separator
 
-    def extract(self, data: t.Any) -> t.Any:
+    def extract(self, data: t.Any, computed: t.Optional[t.Dict[str, t.Any]] = None) -> t.Any:
         """
         Extract values from all fields and accumulate them.
 
@@ -606,7 +666,7 @@ class SourceField(Field):
         self.fallbacks = fallbacks or []
         self.condition = condition
 
-    def extract(self, data: t.Any) -> t.Any:
+    def extract(self, data: t.Any, computed: t.Optional[t.Dict[str, t.Any]] = None) -> t.Any:
         """
         Enhanced extraction with fallbacks and conditions.
 

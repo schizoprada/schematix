@@ -22,7 +22,11 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
     - validate(): Validate extracted values
     - Core attributes: name, required, default, transform
     """
-    __constructs__: set[str] = {'name', 'required', 'default', 'transform', 'source', 'target'}
+    __constructs__: set[str] = {
+        'name', 'required', 'default', 'transform', 'source', 'target',
+        'type', 'choices', 'mapping', 'mapper', 'keysaschoices', 'valuesaschoices',
+        'transient', 'conditional', 'dependencies', 'conditions'
+    }
 
     def __init__(
         self,
@@ -32,6 +36,17 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
         transform: t.Optional[t.Callable] = None,
         source: t.Optional[str] = None,
         target: t.Optional[str] = None,
+        # new params 0.4.5
+        type: t.Optional[t.Type] = None,
+        choices: t.Optional[t.List[t.Any]] = None,
+        mapping: t.Optional[t.Dict] = None,
+        mapper: t.Optional[t.Callable] = None,
+        keysaschoices: bool = True,
+        valuesaschoices: bool = False,
+        transient: bool = False,
+        conditional: bool = False,
+        dependencies: t.Optional[t.List[str]] = None,
+        conditions: t.Optional[t.Dict[str, t.Callable]] = None,
         **kwargs
     ) -> None:
         self.name = name
@@ -41,10 +56,22 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
         self.source = source
         self.target = target
 
+        # 0.4.5
+        self.type = type
+        self.choices = list(choices or []) # tuple suppoer
+        self.mapping = (mapping or {})
+        self.mapper = mapper
+        self.keysaschoices = keysaschoices
+        self.valuesaschoices = valuesaschoices
+        self.transient = transient
+        self.conditional = conditional
+        self.dependencies = list(dependencies or []) # tuple suppoer
+        self.conditions = (conditions or {})
+
         self._kwargs = kwargs # store additional kwargs for subclass
 
     @abc.abstractmethod
-    def extract(self, data: t.Any) -> t.Any:
+    def extract(self, data: t.Any, computed: t.Optional[t.Dict[str, t.Any]] = None) -> t.Any:
         """
         Extract and transform a value from source data.
 
@@ -147,6 +174,50 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
             return getattr(data, self.source, self.default)
         else:
             return self.default
+
+    def _applytype(self, value: t.Any) -> t.Any:
+        """Apply type conversion if type is specified."""
+        if (self.type is None) or (value is None):
+            return value
+
+        try:
+            return self.type(value)
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Cannot convert '{value}' to {self.type.__name__}: {e}")
+
+    def _applymapping(self, value: t.Any) -> t.Any:
+        """Apply value mapping using mapper function."""
+        if not self.mapping:
+            return value
+
+        # direct lookup
+        if value in self.mapping:
+            return self.mapping[value]
+
+        # if no mapper, return default or raise
+        if not self.mapper:
+            if self.default is not None:
+                return self.default
+            raise ValueError(f"No mapping found for value '{value}' and no mapper function provided")
+
+        try:
+            return self.mapper(value, self.mapping)
+        except Exception as e:
+            if self.default is not None:
+                return self.default
+            raise ValueError(f"Mapping failed for value '{value}': {e}")
+
+
+    def _validatechoices(self, value: t.Any) -> t.Any:
+        """Validate value against allowed choices."""
+        if not self.choices:
+            return value
+
+        if value not in self.choices:
+            raise ValueError(f"Value '{value}' not in allowed choices: {self.choices}")
+
+        return value
+
 
     def _applytransform(self, value: t.Any) -> t.Any:
         """

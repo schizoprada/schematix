@@ -1,5 +1,36 @@
 # SCHEMATIX - CHANGELOG
 
+## [0.4.5] -- June 15th, 2025
+### Enhanced Field System
+* **Type Conversion**: Built-in type conversion with `Field(type=int)` for automatic value casting
+* **Choices Validation**: Constrain field values with `Field(choices=[1,2,3,4,5])` for data validation
+* **Value Mapping**: Transform values through lookup tables with `Field(mapping=BRAND_IDS, mapper=fuzzy_func)`
+* **Flexible Mapping**: User-defined mapper functions with signature `mapper(value, mapping_dict) -> mapped_value`
+* **Enhanced Pipeline**: Extraction order: source → transform → type → mapping → choices → validate → required
+
+### Conditional Fields & Dependencies
+* **Conditional Fields**: Dynamic field behavior based on other field values with `Field(conditional=True)`
+* **Dependency System**: Fields can depend on other computed values via `dependencies=['field1', 'field2']`
+* **Multiple Conditions**: Support for 'value', 'required', 'default', 'transform', 'choices', 'type', 'mapping' conditions
+* **Automatic Dependency Resolution**: Topological sorting ensures fields execute in correct dependency order
+* **Circular Dependency Detection**: Clear error messages for invalid dependency graphs
+
+### Transient Fields
+* **Transient Field Support**: Fields used for computation but excluded from final output with `transient=True`
+* **Clean Data Flow**: Separate computation fields from result fields for complex transformations
+
+### Production Features
+* **Robust Error Handling**: Detailed error messages for type conversion, mapping, and dependency failures
+* **Performance Optimized**: Dependency resolution computed once at schema creation time
+* **Backward Compatible**: All existing Field functionality preserved, new features are additive
+* **Comprehensive Testing**: Full test coverage for new pipeline, conditional logic, and dependency resolution
+
+### Advanced Use Cases
+* **E-commerce Product Schemas**: Dynamic category mapping based on gender/brand combinations
+* **Conditional Validation**: Required fields that depend on other field combinations
+* **Multi-stage Transformations**: Complex data pipelines with intermediate computed values
+* **Fuzzy Data Matching**: Custom mapper functions for flexible value transformation
+
 ## [0.4.0] -- May 29th, 2025
 ### Transform System Architecture
 * **BaseTransform & Transform Classes**: Complete transform composition system with operator overloading (`>>`, `|`, `&`)

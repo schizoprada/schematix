@@ -6,6 +6,7 @@ from __future__ import annotations
 import abc, typing as t
 from schematix.core.bases.schema import BaseSchema
 
+
 if t.TYPE_CHECKING:
     from schematix.core.bases.field import BaseField
 
@@ -94,13 +95,24 @@ class BoundSchema:
         Returns:
             Transformed data as dictionary
         """
-        result = {}
+        from schematix.core.deps import DependencyResolver
 
-        for fieldname, boundfield in self._boundfields.items():
+        # resolve field execution order
+        resolver = DependencyResolver(self._boundfields)
+        execorder = resolver.resolveorder()
+
+        result = {}
+        computed = {}
+
+        for fieldname in execorder:
+            field = self._boundfields[fieldname]
             try:
-                result[fieldname] = boundfield.extract(data)
+                value = field.extract(data, computed)
+                computed[fieldname] = value
+                if not field.transient:
+                    result[fieldname] = value
             except Exception as e:
-                raise ValueError(f"Error transforming field '{fieldname}': {str(e)}")
+                raise ValueError(f"Schema transformation failed on field '{fieldname}': {e}")
 
         return result
 
@@ -160,13 +172,24 @@ class Schema(BaseSchema):
         Returns:
             Transformed data in specified format
         """
-        result = {}
+        from schematix.core.deps import DependencyResolver
 
-        for name, field in self._fields.items():
+        # resolve field execution order
+        resolver = DependencyResolver(self._fields)
+        execorder = resolver.resolveorder()
+
+        result = {}
+        computed = {}
+
+        for fieldname in execorder:
+            field = self._fields[fieldname]
             try:
-                result[name] = field.extract(data)
+                value = field.extract(data, computed)
+                computed[fieldname] = value
+                if not field.transient:
+                    result[fieldname] = value
             except Exception as e:
-                raise ValueError(f"Schema transformation failed on field '{name}': {e}")
+                raise ValueError(f"Schema transformation failed on field '{fieldname}': {e}")
 
         if typetarget is not None:
             return self._typeconvert(result, typetarget)
@@ -206,6 +229,61 @@ class Schema(BaseSchema):
                 errors[fieldname] = str(e)
 
         return errors
+
+    def subset(self, *fieldnames: str) -> t.Type['Schema']:
+        """
+        Create a schema with only specified fields.
+
+        Args:
+            *fieldnames: Names of fields to include
+
+        Returns:
+            New schema class with subset of fields
+        """
+        subsets = {
+            name: field for name, field in self._fields.items()
+            if name in fieldnames
+        }
+
+        if not subsets:
+            raise ValueError(f"No valid fields found in subset: {fieldnames}")
+
+        return type(f"Subset{self.__class__.__name__}", (Schema,), subsets)
+
+    def transformplural(self, datalist: t.List[t.Any], typetarget: t.Optional[t.Type] = None) -> t.List[t.Any]:
+        """
+        Transform multiple data objects using this schema.
+
+        Args:
+            datalist: List of data objects to transform
+            typetarget: Optional target type for each result
+
+        Returns:
+            List of transformed data objects
+        """
+        results = []
+
+        for i, data in enumerate(datalist):
+            try:
+                result = self.transform(data, typetarget)
+                results.append(result)
+            except Exception as e:
+                raise ValueError(f"Failed to transform item {i}: {e}")
+
+        return results
+
+    def __call__(self, data: t.Any, typetarget: t.Optional[t.Type] = None) -> t.Any:
+        """
+        Make schema instances callable for convenient transformation.
+
+        Args:
+            data: Source data to transform
+            typetarget: Optional target type
+
+        Returns:
+            Transformed data
+        """
+        return self.transform(data, typetarget)
 
     @classmethod
     def FromFields(cls, **fields: 'BaseField') -> t.Type['Schema']:
@@ -259,58 +337,15 @@ class Schema(BaseSchema):
 
         return type(f"Copy{cls.__name__}", (Schema,), new)
 
-    def subset(self, *fieldnames: str) -> t.Type['Schema']:
-        """
-        Create a schema with only specified fields.
 
-        Args:
-            *fieldnames: Names of fields to include
+    @classmethod
+    def FromSQLA(cls, model: t.Any) -> t.Type['Schema']:
+        raise NotImplemented
 
-        Returns:
-            New schema class with subset of fields
-        """
-        subsets = {
-            name: field for name, field in self._fields.items()
-            if name in fieldnames
-        }
+    @classmethod
+    def FromDataclass(cls, dc: t.Any) -> t.Type['Schema']:
+        raise NotImplemented
 
-        if not subsets:
-            raise ValueError(f"No valid fields found in subset: {fieldnames}")
-
-        return type(f"Subset{self.__class__.__name__}", (Schema,), subsets)
-
-    def transformplural(self, datalist: t.List[t.Any], typetarget: t.Optional[t.Type] = None) -> t.List[t.Any]:
-        """
-        Transform multiple data objects using this schema.
-
-        Args:
-            datalist: List of data objects to transform
-            typetarget: Optional target type for each result
-
-        Returns:
-            List of transformed data objects
-        """
-        results = []
-
-        for i, data in enumerate(datalist):
-            try:
-                result = self.transform(data, typetarget)
-                results.append(result)
-            except Exception as e:
-                raise ValueError(f"Failed to transform item {i}: {e}")
-
-        return results
-
-
-    def __call__(self, data: t.Any, typetarget: t.Optional[t.Type] = None) -> t.Any:
-        """
-        Make schema instances callable for convenient transformation.
-
-        Args:
-            data: Source data to transform
-            typetarget: Optional target type
-
-        Returns:
-            Transformed data
-        """
-        return self.transform(data, typetarget)
+    @classmethod
+    def FromPydantic(cls, model: t.Any) -> t.Type['Schema']:
+        raise NotImplemented
