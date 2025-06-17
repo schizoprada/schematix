@@ -299,14 +299,47 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
                     raise ValueError(f"Cannot set target '{self.target}' on {type(targetobj)}: {str(e)}")
 
     def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}("
-            f"name={self.name!r}, "
-            f"source={self.source!r}, "
-            f"target={self.target!r}, "
-            f"required={self.required}, "
-            f"default={self.default!r})"
-        )
+        """Compact version that keeps output on single line."""
+        attrs = []
+
+        # Always show name
+        attrs.append(f"name={self.name!r}")
+
+        # Core attributes
+        if self.source is not None:
+            attrs.append(f"source={self.source!r}")
+        if self.target is not None:
+            attrs.append(f"target={self.target!r}")
+        if self.required:
+            attrs.append("required=True")
+        if self.default is not None:
+            attrs.append(f"default={self.default!r}")
+
+        # Enhanced features (show only if configured)
+        if self.transform is not None:
+            transformname = getattr(self.transform, '__name__', 'func')
+            attrs.append(f"transform={transformname}")
+
+        if self.type is not None:
+            attrs.append(f"type={self.type.__name__}")
+
+        if self.choices:
+            choicecount = len(self.choices)
+            if choicecount <= 3:
+                attrs.append(f"choices={self.choices}")
+            else:
+                attrs.append(f"choices=[...{choicecount} items]")
+
+        if self.mapping:
+            attrs.append(f"mapping={{...{len(self.mapping)} items}}")
+
+        if self.transient:
+            attrs.append("transient=True")
+
+        if self.conditional:
+            attrs.append("conditional=True")
+
+        return f"{self.__class__.__name__}({', '.join(attrs)})"
 
     ## Operator Overloads ##
     def __rshift__(self, other: 'BaseField') -> 'BoundField':

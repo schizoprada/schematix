@@ -1,5 +1,8 @@
 # SCHEMATIX - CHANGELOG
 
+## [0.4.6] -- June 17th, 2025
++ **Updated BaseField __repr__**: Updated `BaseField` representation to include new attributes added in [0.4.5]
+
 ## [0.4.5] -- June 15th, 2025
 ### Enhanced Field System
 * **Type Conversion**: Built-in type conversion with `Field(type=int)` for automatic value casting
