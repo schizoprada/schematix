@@ -77,15 +77,15 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
 
         # 0.4.5
         self.type = type
-        self.choices = choices
-        self.mapping = mapping
+        self.choices = choices # 0.4.63
+        self.mapping = mapping # 0.4.63
         self.mapper = mapper
         self.keysaschoices = keysaschoices
         self.valuesaschoices = valuesaschoices
         self.transient = transient
         self.conditional = conditional
-        self.dependencies = dependencies
-        self.conditions = conditions
+        self.dependencies = dependencies # 0.4.63
+        self.conditions = conditions # 0.4.63
 
         self._kwargs = kwargs # store additional kwargs for subclass
         self._initializedwith: dict[str, t.Any] = {
