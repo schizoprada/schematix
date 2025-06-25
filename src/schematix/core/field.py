@@ -78,7 +78,12 @@ class Field(BaseField):
         # handle conditional
         if self.conditional:
             if computed is None:
-                raise ValueError(f"Conditional field '{self.name}' requires computed (fields)")
+                # only raise if field is required
+                if self.required:
+                    raise ValueError(f"Conditional field '{self.name}' requires computed (fields)")
+                else:
+                    # return default for non-required conditional fields
+                    return self.default
             evaluated = self._evaluateconditions(computed)
 
             if 'value' in evaluated:

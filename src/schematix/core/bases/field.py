@@ -27,6 +27,25 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
         'type', 'choices', 'mapping', 'mapper', 'keysaschoices', 'valuesaschoices',
         'transient', 'conditional', 'dependencies', 'conditions'
     }
+    __defaults__: dict[str, t.Any] = {
+        "name": None,
+        "required": False,
+        "default": None,
+        "transform": None,
+        "source": None,
+        "target": None,
+        "type": None,
+        "choices": None,
+        "mapping": None,
+        "mapper": None,
+        "keysaschoices": True,
+        "valuesaschoices": False,
+        "transient": False,
+        "conditional": False,
+        "dependencies": None,
+        "conditions": None,
+    }
+
 
     def __init__(
         self,
@@ -187,8 +206,20 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
 
     def _applymapping(self, value: t.Any) -> t.Any:
         """Apply value mapping using mapper function."""
+        if value is None:
+            return None
+
         if not self.mapping:
             return value
+
+        # handle unhashable types by mapping each element
+        if isinstance(value, (list, tuple, set)):
+            try:
+                return [self._applymapping(item) for item in value]
+            except Exception as e:
+                if self.default is not None:
+                    return self.default
+                raise ValueError(f"Mapping failed for {type(value)} value '{value}': {e}")
 
         # direct lookup
         if value in self.mapping:
