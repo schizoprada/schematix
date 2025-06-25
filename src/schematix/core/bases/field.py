@@ -77,17 +77,36 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
 
         # 0.4.5
         self.type = type
-        self.choices = list(choices or []) # tuple suppoer
-        self.mapping = (mapping or {})
+        self.choices = choices
+        self.mapping = mapping
         self.mapper = mapper
         self.keysaschoices = keysaschoices
         self.valuesaschoices = valuesaschoices
         self.transient = transient
         self.conditional = conditional
-        self.dependencies = list(dependencies or []) # tuple suppoer
-        self.conditions = (conditions or {})
+        self.dependencies = dependencies
+        self.conditions = conditions
 
         self._kwargs = kwargs # store additional kwargs for subclass
+        self._initializedwith: dict[str, t.Any] = {
+            "name": name,
+            "required": required,
+            "default": default,
+            "transform": transform,
+            "source": source,
+            "target": target,
+            "type": type,
+            "choices": choices,
+            "mapping": mapping,
+            "mapper": mapper,
+            "keysaschoices": keysaschoices,
+            "valuesaschoices": valuesaschoices,
+            "transient": transient,
+            "conditional": conditional,
+            "dependencies": dependencies,
+            "conditions": conditions,
+        }
+
 
     @abc.abstractmethod
     def extract(self, data: t.Any, computed: t.Optional[t.Dict[str, t.Any]] = None) -> t.Any:

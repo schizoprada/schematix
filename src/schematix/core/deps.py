@@ -21,7 +21,7 @@ class DependencyResolver:
         """Validate all dependencies exist"""
         for name, field in self.fields.items():
             if field.conditional:
-                for dep in field.dependencies:
+                for dep in (field.dependencies or []):
                     if dep not in self.fields:
                         raise ValueError(f"Field '{name}' is missing dependency: '{dep}'")
 
@@ -47,7 +47,7 @@ class DependencyResolver:
             field = self.fields[node]
 
             if field.conditional:
-                for dep in field.dependencies:
+                for dep in (field.dependencies or []):
                     cycle = dfs(dep, path[:])
                     if cycle:
                         return cycle
@@ -76,7 +76,7 @@ class DependencyResolver:
         # build graph
         for name, field in self.fields.items():
             if field.conditional:
-                for dep in field.dependencies:
+                for dep in (field.dependencies or []):
                     graph[dep].append(name)
                     degree[name] += 1
 

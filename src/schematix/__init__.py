@@ -7,7 +7,7 @@ reusability and composability. Define target schemas once and bind them to diffe
 data sources with source-specific extraction and transformation logic.
 """
 
-__version__ = "0.4.61"
+__version__ = "0.4.62"
 __author__ = "Joel Yisrael"
 __email__ = "schizoprada@gmail.com"
 __license__ = "MIT"
