@@ -32,8 +32,8 @@ from schematix import Schema, Field
 
 # Define your target schema
 class UserSchema(Schema):
-    id = Field(source='user_id')
-    email = Field(source='email_address', required=True)
+    id = Field(source='user_id', target='id')
+    email = Field(source='email_address', target='email', required=True)
     name = Field(source='first_name') + Field(source='last_name')
 
 # Transform data
@@ -330,15 +330,6 @@ Schematix is actively developed and production-ready:
 - ✅ **Semantic versioning** and changelog
 - ✅ **MIT License** - use freely in commercial projects
 
-## 📚 Documentation
-
-- [Getting Started Guide](docs/getting-started.md)
-- [API Reference](docs/api-reference.md)
-- [Field Types](docs/field-types.md)
-- [Schema Composition](docs/schema-composition.md)
-- [Advanced Patterns](docs/advanced-patterns.md)
-- [Migration Guide](docs/migration.md)
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -351,5 +342,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 - **PyPI**: https://pypi.org/project/schematix/
 - **Repository**: https://github.com/schizoprada/schematix
-- **Documentation**: https://schematix.readthedocs.io
 - **Issues**: https://github.com/schizoprada/schematix/issues
