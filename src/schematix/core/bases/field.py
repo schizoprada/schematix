@@ -25,7 +25,7 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
     __constructs__: set[str] = {
         'name', 'required', 'default', 'transform', 'source', 'target',
         'type', 'choices', 'mapping', 'mapper', 'keysaschoices', 'valuesaschoices',
-        'transient', 'conditional', 'dependencies', 'conditions'
+        'transient', 'conditional', 'dependencies', 'conditions', 'validator'
     }
     __defaults__: dict[str, t.Any] = {
         "name": None,
@@ -44,6 +44,7 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
         "conditional": False,
         "dependencies": None,
         "conditions": None,
+        "validator": None,
     }
 
 
@@ -66,6 +67,7 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
         conditional: bool = False,
         dependencies: t.Optional[t.List[str]] = None,
         conditions: t.Optional[t.Dict[str, t.Callable]] = None,
+        validator: t.Optional[t.Callable[[t.Any], None]] = None,
         **kwargs
     ) -> None:
         self.name = name
@@ -86,6 +88,8 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
         self.conditional = conditional
         self.dependencies = dependencies # 0.4.63
         self.conditions = conditions # 0.4.63
+        self.validator = validator # 0.4.64
+
 
         self._kwargs = kwargs # store additional kwargs for subclass
         self._initializedwith: dict[str, t.Any] = {
@@ -105,6 +109,7 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
             "conditional": conditional,
             "dependencies": dependencies,
             "conditions": conditions,
+            "validator": validator,
         }
 
 
@@ -153,8 +158,10 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
             Validated value (may be transformed)
 
         Raises:
-            ValueError: If validation fails
+            Exception: If custom validator fails (raises whatever the validator raises)
         """
+        if self.validator is not None:
+            self.validator(value)
         return value
 
     def _getnestedvalue(self, data: t.Any, pathparts: t.List[str]) -> t.Any:
@@ -388,6 +395,9 @@ class BaseField(abc.ABC, metaclass=FieldMeta):
 
         if self.conditional:
             attrs.append("conditional=True")
+
+        if self.validator is not None:
+            attrs.append(f"validator={self.validator}")
 
         return f"{self.__class__.__name__}({', '.join(attrs)})"
 

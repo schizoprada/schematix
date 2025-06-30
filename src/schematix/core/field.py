@@ -40,7 +40,7 @@ class Field(BaseField):
     def _extractwithoverrides(self, data: t.Any, overrides: t.Dict[str, t.Any]) -> t.Any:
         """Extract with temporary property overrides."""
         originals = {}
-        for prop in ['required', 'default', 'transform', 'choices', 'type', 'mapping']:
+        for prop in ['required', 'default', 'transform', 'choices', 'type', 'mapping', 'validator']:
             originals[prop] = getattr(self, prop)
 
         try:
@@ -154,13 +154,20 @@ class FallbackField(BaseField):
         Returns:
             Value from primary field, or fallback field if primary fails
         """
+        #print(f"DEBUG FallbackField.extract: data = {data}")
+        #print(f"DEBUG FallbackField.extract: computed = {computed}")
         try:
             value = self.primary.extract(data)
+            #print(f"DEBUG FallbackField.extract: value = {value}")
             # Consider None as a failure if primary is not required
             if value is None and not self.primary.required:
+                #print(f"DEBUG FallbackField.extract: falling back")
                 return self.fallback.extract(data)
             return value
-        except Exception:
+        except Exception as e:
+            if self.primary.validator is not None:
+                raise e
+            #print(f"DEBUG FallbackField.extract: exception = {e}")
             # Primary failed, try fallback
             return self.fallback.extract(data)
 
@@ -243,6 +250,9 @@ class CombinedField(BaseField):
                         result[f"field{len(result)}"] = value
 
             except Exception as e:
+                # if field has a validator, raise
+                if field.validator is not None:
+                    raise e
                 if field.required:
                     errors.append(f"Required field '{field.name}' failed: {e}")
                 # Non-required fields that fail are just skipped
@@ -504,6 +514,8 @@ class AccumulatedField(BaseField):
                 if value is not None:
                     values.append(value)
             except Exception as e:
+                if field.validator is not None:
+                    raise e
                 if field.required:
                     raise ValueError(f"Required field '{field.name}' failed in accumulation: {e}")
                 # Skip non-required fields that fail
@@ -691,7 +703,9 @@ class SourceField(Field):
             if (result == self.default):
                 return self._extractwithfallbacks(data)
             return result
-        except (ValueError, KeyError, AttributeError):
+        except Exception as e:
+            if self.validator is not None:
+                raise e
             # Try fallback sources
             return self._extractwithfallbacks(data)
 
@@ -705,6 +719,7 @@ class SourceField(Field):
         Returns:
             First successful extraction or default value
         """
+        #print(f"DEBUG SourceField._extractwithfallbacks: data = {data}")
         originalsource = self.source
 
         for fallbacksource in self.fallbacks:
@@ -712,8 +727,13 @@ class SourceField(Field):
                 # Temporarily set fallback as source
                 self.source = fallbacksource
                 result = super().extract(data)
+                #print(f"DEBUG SourceField._extractwithfallbacks: result = {result}")
                 return result
-            except Exception:
+            except Exception as e:
+                if self.validator is not None:
+                    raise e
+                #print(f"DEBUG SourceField._extractwithfallbacks: exception = {e}")
+
                 continue
             finally:
                 # Restore original source
@@ -724,6 +744,7 @@ class SourceField(Field):
             sources = [originalsource] + self.fallbacks
             raise ValueError(f"Required field '{self.name}' not found in any sources: {sources}")
 
+        #print(f"DEBUG SourceField._extractwithfallbacks: returning default = {self.default}")
         return self.default
 
     def addfallback(self, source_path: str) -> 'SourceField':

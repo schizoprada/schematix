@@ -1,5 +1,31 @@
 # SCHEMATIX - CHANGELOG
 
+## [0.4.64] -- June 30th, 2025
+### Custom Validator Support
+* **Custom Validator Parameter**: Added `validator` parameter to all field types for custom validation logic
+* **Flexible Validation**: Validators can raise any exception type - not forced into `ValueError` wrapper
+* **Pipeline Integration**: Validators execute after transform, type conversion, mapping, and choices validation
+* **Validation Priority**: Fields with validators always propagate validation errors, bypassing fallback logic in composite fields
+* **Comprehensive Coverage**: Validator support across all field types including SourceField, TargetField, BoundField, and composite fields (CombinedField, AccumulatedField, FallbackField, NestedField)
+* **Conditional Validation**: Validators can be dynamically overridden in conditional field conditions
+* **Null Handling**: Validators receive and can validate `None` values if desired
+* **Exception Transparency**: Original validator exceptions propagate without wrapping or modification
+
+### Enhanced Error Handling
+* **Validation vs Extraction Errors**: Clear distinction between validation failures and data extraction failures
+* **Composite Field Logic**: CombinedField and AccumulatedField now properly propagate validation errors while maintaining existing fallback behavior for extraction errors
+* **Fallback Field Priority**: FallbackField and SourceField respect validation errors over fallback attempts when validators are present
+
+### API Consistency
+* **Universal Support**: All field constructors accept `validator` parameter
+* **Documentation Updates**: Updated field representations and docstrings to reflect validator functionality
+* **Backward Compatible**: Existing field functionality unchanged, validator is optional parameter
+
+### Testing & Quality
+* **Comprehensive Test Suite**: 21 passing tests covering all validator scenarios and edge cases
+* **Integration Testing**: Full validation pipeline testing with all field types and composite operations
+* **Error Propagation Testing**: Verification of proper exception handling across all field combinations
+
 ## [0.4.6] -- June 17th, 2025
 + **Updated BaseField __repr__**: Updated `BaseField` representation to include new attributes added in [0.4.5]
 
